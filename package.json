@@ -1,0 +1,24 @@
+{
+  "name": "git-source-viewer",
+  "private": true,
+  "scripts": {
+    "build": "poi --prod",
+    "start": "poi --serve"
+  },
+  "dependencies": {
+    "@octokit/rest": "^18.0.0",
+    "antd": "^4.3.4",
+    "query-string": "^6.8.3",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-router-dom": "^4.1.1",
+    "react-syntax-highlighter": "^12.2.1",
+    "styled-components": "4.3.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/preset-env": "^7.3.4",
+    "babel-preset-poi": "^10.0.2",
+    "poi": "^12.4.2"
+  }
+}
