@@ -1,12 +1,13 @@
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { dark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { StyledSyntaxHighlighter } from './styledComponents'
 
-const CodeViewer = () => {
-  const codeString = '(num) => num + 1';
+const CodeViewer = ({raw}) => {
+  const codeString = raw || '(num) => num + 1';
+
   return (
-    <SyntaxHighlighter language="javascript" style={dark}>
+    <StyledSyntaxHighlighter language="javascript" style={dark}>
       {codeString}
-    </SyntaxHighlighter>
+    </StyledSyntaxHighlighter>
   );
 };
 

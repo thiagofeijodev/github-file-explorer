@@ -2,13 +2,11 @@ import React from 'react'
 import { Redirect } from 'react-router-dom'
 import { parse } from 'query-string'
 
-import TreeList from 'components/TreeList'
-import CodeViewer from 'components/CodeViewer'
+import Composer from './components/Composer'
 import Octokit from 'services/octokit'
 
 function App() {
   let params = parse(document.location.search, { arrayFormat: 'bracket' })
-
   if (!params.owner || !params.repo) {
     return (
       <Redirect to="/" />
@@ -16,14 +14,9 @@ function App() {
   }
 
   const octokit = new Octokit({ params })
-  console.log('octokit');
-
   return (
-    <div className="App">
-      <TreeList />
-      <CodeViewer />
-    </div>
+    <Composer service={octokit} />
   );
 }
 
-export default App;
+export default App

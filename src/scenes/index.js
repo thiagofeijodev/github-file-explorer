@@ -6,8 +6,6 @@ import Site from 'scenes/Site'
 import GlobalStyles from './styles'
 
 const Root = () => {
-  console.log('root');
-  
   return (
     <React.Fragment>
       <GlobalStyles />

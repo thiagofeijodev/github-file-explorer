@@ -4,104 +4,75 @@ class OctokitWrapper {
 
   defaultBranch = 'master'
 
-  constructor({ TreeList, onLoadNode, params = {} }) {
-    this.octokit = new Octokit()
-    this.tree = TreeList
-    this.onLoadNode = onLoadNode
-    this.params = params
+  key = 'title'
 
-    const treeList = params.tree_sha || this.defaultBranch
-    this.getFromSha(treeList)
+  constructor({ params = {} }) {
+    this.octokit = new Octokit()
+    this.params = params
   }
 
-  async getFromSha(tree_sha) {
+  async getRoot() {
+    const treeList = this.params.tree_sha || this.defaultBranch
+    const tree = await this.getFromSha(treeList)
+    return tree
+  }
+
+  async getFromSha(tree_sha, key = '') {
     const { data }  = await this.octokit.git.getTree({
       ...this.params,
       tree_sha
     })
 
-    console.log(data);
-    
+    return data
+      .tree
+      .map(this.mapTree(key).bind(this))
+      .sort(this.sortTree.bind(this))
   }
 
-  mapTree(data) {
-    const defaultNode = {
-      name: data.path,
-      sha: data.sha,
-    }
+  async loadFile(sha) {
+    const {owner, repo} = this.params
 
-    if (data.type === "blob")
-      return defaultNode
+    const { data } = await this.octokit.git.getBlob({
+      owner,
+      repo,
+      file_sha: sha
+    })
 
+    const rawFile = decodeURIComponent(escape(window.atob( data.content )));
+    return rawFile
+  }
+
+  mapTree = key => (data, index) => {
     return {
-        ...defaultNode,
-        loading: true,
-        children: []
+      [this.key]: data.path,
+      sha: data.sha,
+      key: `${key}${index}`,
+      isLeaf: data.type === "blob",
     }
   }
 
   sortTree(a, b) {
-    const prev = a.name.toString().toLowerCase()
-    const next = b.name.toString().toLowerCase()
+    const prev = a[this.key].toString().toLowerCase()
+    const next = b[this.key].toString().toLowerCase()
 
-    if (!a.children && !b.children) {
+    if (!a.isLeaf && !b.isLeaf) {
       return prev > next ? 1 : 0
     }
 
-    if (a.children && b.children) {
+    if (a.isLeaf && b.isLeaf) {
       return prev > next ? 1 : 0
     }
 
-    if (a.children && !b.children) {
-      return -1
-    }
-
-    if (!a.children && b.children) {
+    if (a.isLeaf && !b.isLeaf) {
       return 1
+    }
+
+    if (!a.isLeaf && b.isLeaf) {
+      return -1
     }
 
     return 0
   }
-
-  /*
-  async loadTreeList(urlParams, node) {
-    const { data }  = await this.octokit.git.getTree(urlParams)
-
-    const treeListData = data.tree.map(this.mapTree).sort(this.sortTree)
-
-    if (node.children) {
-      node.loading = false
-      node.children.push(...treeListData)
-      this.context.setState(() => ({ treeListData: this.treeListData }));
-    } else {
-      node.push(...treeListData)
-      this.context.setState(() => ({ treeListData: this.treeListData }));
-    }
-  }
-
-  async loadFile(params, node) {
-    const {tabs} = this.context.state;
-
-    params.file_sha = node.sha
-    delete params.tree_sha
-
-    const { data } = await this.octokit.git.getBlob(params)
-
-    const rawFile = decodeURIComponent(escape(window.atob( data.content )));
-    
-    tabs.push({content: rawFile, name: node.name})
-    this.context.setState(() => ({tab: <TabsView tabs={[...tabs]}/>, tabs: tabs}));
-  }
-    
-  onToggle(node, toggled) {
-    if (node.children) {
-      node.toggled = toggled;
-      this.loadTreeList(this.getParams(node.sha), node)
-    } else {
-      this.loadFile(this.getParams(), node)
-    }
-  }
-  */
 
 }
 

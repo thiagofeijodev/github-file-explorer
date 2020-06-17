@@ -1,112 +1,50 @@
 import React, { useState } from 'react'
 import { Tree } from 'antd'
+import updateTreeData from 'services/antdUpdateTree'
 
-const { TreeNode } = Tree;
-const treeData = [
-  {
-    title: '0-0',
-    key: '0-0',
-    children: [
-      {
-        title: '0-0-0',
-        key: '0-0-0',
-        children: [
-          {
-            title: '0-0-0-0',
-            key: '0-0-0-0',
-          },
-          {
-            title: '0-0-0-1',
-            key: '0-0-0-1',
-          },
-          {
-            title: '0-0-0-2',
-            key: '0-0-0-2',
-          },
-        ],
-      },
-      {
-        title: '0-0-1',
-        key: '0-0-1',
-        children: [
-          {
-            title: '0-0-1-0',
-            key: '0-0-1-0',
-          },
-          {
-            title: '0-0-1-1',
-            key: '0-0-1-1',
-          },
-          {
-            title: '0-0-1-2',
-            key: '0-0-1-2',
-          },
-        ],
-      },
-      {
-        title: '0-0-2',
-        key: '0-0-2',
-      },
-    ],
-  },
-  {
-    title: '0-1',
-    key: '0-1',
-    children: [
-      {
-        title: '0-1-0-0',
-        key: '0-1-0-0',
-      },
-      {
-        title: '0-1-0-1',
-        key: '0-1-0-1',
-      },
-      {
-        title: '0-1-0-2',
-        key: '0-1-0-2',
-      },
-    ],
-  },
-  {
-    title: '0-2',
-    key: '0-2',
-  },
-];
-
-const TreeList = () => {
-  const [expandedKeys, setExpandedKeys] = useState(['0-0-0', '0-0-1']);
-  const [checkedKeys, setCheckedKeys] = useState(['0-0-0']);
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [autoExpandParent, setAutoExpandParent] = useState(true);
-
-  const onExpand = expandedKeys => {
-    console.log('onExpand', expandedKeys); // if not set autoExpandParent to false, if children expanded, parent can not collapse.
-    // or, you can remove all expanded children keys.
-
-    setExpandedKeys(expandedKeys);
-    setAutoExpandParent(false);
-  };
-
-  const onCheck = checkedKeys => {
-    console.log('onCheck', checkedKeys);
-    setCheckedKeys(checkedKeys);
-  };
+const TreeList = ({ service, onOpenFile }) => {
+  const [treeData, setTreeData] = useState([])
+  const [expandedKeys, setExpandedKeys] = useState([])
+  const [selectedKeys, setSelectedKeys] = useState([])
 
   const onSelect = (selectedKeys, info) => {
-    console.log('onSelect', info);
-    setSelectedKeys(selectedKeys);
+    if (info.node.isLeaf) {
+      return onOpenFile(info.node)
+    }
+    
+    if (expandedKeys.find(key => selectedKeys.includes(key))) {
+      setExpandedKeys(origin => 
+        origin.filter(key => !selectedKeys.includes(key)))
+    } else {
+      setExpandedKeys(origin => [...origin, ...selectedKeys], 
+        setSelectedKeys([]))
+    }
   };
+
+  function onLoadData({sha, key, children}) {
+    return new Promise(async resolve => {
+      if (children) return resolve()
+
+      const data = await service.getFromSha(sha, `${key}-`)
+      setTreeData(origin => updateTreeData(origin, key, data), resolve())
+    })
+  }
+
+  React.useEffect(() => {
+    (async function load() {
+      const tree = await service.getRoot()
+      setTreeData(tree)
+    })()
+  }, [])
 
   return (
     <Tree
-      checkable
-      onExpand={onExpand}
+      showLine
       expandedKeys={expandedKeys}
-      autoExpandParent={autoExpandParent}
-      onCheck={onCheck}
-      checkedKeys={checkedKeys}
-      onSelect={onSelect}
+      onExpand={setExpandedKeys}
       selectedKeys={selectedKeys}
+      onSelect={onSelect}
+      loadData={onLoadData}
       treeData={treeData}
     />
   )
