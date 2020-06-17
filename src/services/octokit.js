@@ -7,7 +7,7 @@ class OctokitWrapper {
   key = 'title'
 
   constructor({ params = {} }) {
-    this.octokit = new Octokit()
+    this.octokit = new Octokit({ auth: '98b9006761edbfd1b1fa9939c2ab624e4eebc7a5' })
     this.params = params
   }
 
@@ -38,8 +38,11 @@ class OctokitWrapper {
       file_sha: sha
     })
 
-    const rawFile = decodeURIComponent(escape(window.atob( data.content )));
-    return rawFile
+    try {
+      return decodeURIComponent(escape(window.atob( data.content )))
+    } catch (err) {
+      return 'can not load'
+    }
   }
 
   mapTree = key => (data, index) => {

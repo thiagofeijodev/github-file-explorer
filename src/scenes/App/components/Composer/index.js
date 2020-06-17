@@ -1,30 +1,38 @@
 import React from 'react'
-import { Layout, Skeleton } from 'antd'
+import { Layout } from 'antd'
 
 import TreeList from 'components/TreeList'
 import CodeViewer from 'components/CodeViewer'
+import safeExec from 'services/safeExec'
 
-import { StyledFullPage, StyledSider, StyledTabs, StyledTabPane } from './styledComponents'
-
-const { Header, Content } = Layout;
+import { 
+  StyledFullPage,
+  StyledSider,
+  StyledTabs,
+  StyledTabPane,
+  StyledSkeleton,
+  StyledContent,
+  StyledHeader,
+  StyledContentCodeViewer as Content,
+} from './styledComponents'
 
 const Composer = ({ service }) => {
   const [file, setFile] = React.useState(null)
   const [files, setFiles] = React.useState({})
-  const [opens, setOpens] = React.useState([])
-  const [activeKey, setActiveKey] = React.useState(null)
+  const [openFiles, setOpenFiles] = React.useState([])
+  const [activeTab, setActiveTab] = React.useState(null)
   const [isLoading, setIsLoading] = React.useState(false)
 
   const onEdit = (targetKey, action) => {
     if (action === 'remove') {
-      const newOpens = opens.filter(o => o.key != targetKey)
-      setOpens(newOpens)
+      const newOpenFiles = openFiles.filter(o => o.key != targetKey)
+      setOpenFiles(newOpenFiles)
 
-      if (targetKey == activeKey) {
-        if (newOpens.length) {
-          setActiveKey(newOpens[0].key)
+      if (targetKey === activeTab) {
+        if (newOpenFiles.length) {
+          setActiveTab(newOpenFiles[0].key)
         } else {
-          setActiveKey(null)
+          setActiveTab(null)
           setFile(null)
         }
       }
@@ -32,58 +40,66 @@ const Composer = ({ service }) => {
   }
 
   const onOpenFile = node => {
-    const index = opens.findIndex(open => open.sha === node.sha)
-    if (index >= 0) return setActiveKey(index.toString())
+    const index = openFiles.findIndex(file => file.sha === node.sha)
+    if (index >= 0) return setActiveTab(index.toString())
 
-    setOpens(
+    setOpenFiles(
       origin => [...origin, node],
-      setActiveKey(node.key)
+      setActiveTab(node.key)
     )
   }
 
   React.useEffect(() => {
-    const open = opens.find(open => open.key === activeKey)
-    if (!activeKey || !open) return setFile(null)
+    const open = openFiles.find(file => file.key === activeTab)
+    if (!activeTab || !open) return setFile(null)
 
-    const { sha } = open
+    const { sha, title } = open
     if(files[sha]) return setFile(files[sha])
 
     const load = async () => {
       setIsLoading(true)
       const raw = await service.loadFile(sha)
+      const file = {
+        name: title,
+        raw: raw,
+      }
 
       setFiles(origin => ({
         ...origin,
-        [sha]: raw
-      }), setFile(raw))
-      setIsLoading(false)
+        [sha]: file
+      }), setFile(file), setIsLoading(false))
     }
-    load()
-  }, [activeKey])
+
+    safeExec(load.bind(this), () => setIsLoading(false))
+  }, [activeTab])
 
   return (
     <StyledFullPage>
-      <Header className="header">
-      </Header>
+      <StyledHeader className="header">
+      </StyledHeader>
       <Layout>
         <StyledSider width={200}>
           <TreeList service={service} onOpenFile={onOpenFile} />
         </StyledSider>
         <Layout>
-          <Content className="site-layout-background">
+          <StyledContent className="site-layout-background">
             <StyledTabs
               hideAdd
               type="editable-card"
-              activeKey={activeKey}
-              onChange={setActiveKey}
+              activeKey={activeTab}
+              onChange={setActiveTab}
               onEdit={onEdit}
             >
-              {opens.map((pane, index) => (
+              {openFiles.map((pane) => (
                 <StyledTabPane tab={pane.title} key={pane.key} closable={true} />
               ))}
             </StyledTabs>
-            {isLoading ? <Skeleton /> : file ? <CodeViewer raw={file}/> : null}
-          </Content>
+            {isLoading 
+              ? <StyledSkeleton /> 
+              : file 
+                ? <Content><CodeViewer {...file} /></Content>
+                : null}
+          </StyledContent>
         </Layout>
       </Layout>
     </StyledFullPage>

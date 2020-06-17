@@ -4,11 +4,11 @@
 
 ## Project Scripts
 
-### `npm run build`
+### `yarn build`
 
 Build app for production to `./dist` folder.
 
-### `npm run dev`
+### `yarn start `
 
 Start a dev server to preview your app.
 

@@ -10,7 +10,7 @@ const Root = () => {
     <React.Fragment>
       <GlobalStyles />
       <Switch>
-        <Route path="/ide" component={App} />
+        <Route path="/app" component={App} />
         <Route path="/" component={Site} />
       </Switch>
     </React.Fragment>
